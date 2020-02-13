@@ -32,6 +32,11 @@ export default class EditorJS {
    */
   public destroy: () => void;
 
+  /**
+   * Internal Core api
+   */
+  public core: Core;
+
   /** Editor version */
   static get version(): string {
     return VERSION;
@@ -58,7 +63,7 @@ export default class EditorJS {
     /**
      * Create a Editor.js instance
      */
-    const editor = new Core(configuration);
+    const editor = this.core = new Core(configuration);
 
     /**
      * We need to export isReady promise in the constructor

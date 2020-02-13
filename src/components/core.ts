@@ -13,7 +13,10 @@ import {LogLevels} from './utils';
  */
 const contextRequire = require.context('./modules', true);
 
-const modules = [];
+const modules = [
+  require('./dom'),
+  require('./block'),
+];
 
 contextRequire.keys().forEach((filename) => {
   /**
