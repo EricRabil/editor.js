@@ -47,7 +47,7 @@ export default class EditorJS {
    *
    * @param {EditorConfig|String|undefined} [configuration] - user configuration
    */
-  public constructor(configuration?: EditorConfig|string) {
+  public constructor(configuration?: (EditorConfig & {patch?: (editor: EditorJS) => any})|string) {
     /**
      * Set default onReady function
      */
@@ -64,6 +64,10 @@ export default class EditorJS {
      * Create a Editor.js instance
      */
     const editor = this.core = new Core(configuration);
+
+    if (typeof configuration === 'object' && typeof configuration.patch === 'function') {
+      configuration.patch(this);
+    }
 
     /**
      * We need to export isReady promise in the constructor

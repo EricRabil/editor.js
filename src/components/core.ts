@@ -15,7 +15,6 @@ const contextRequire = require.context('./modules', true);
 
 const modules = [
   require('./dom'),
-  require('./block').default,
 ];
 
 contextRequire.keys().forEach((filename) => {
