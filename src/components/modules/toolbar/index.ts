@@ -199,7 +199,7 @@ export default class Toolbar extends Module {
      * 1) On desktop — Toolbar at the top of Block, Plus/Toolbox moved the center of Block
      * 2) On mobile — Toolbar at the bottom of Block
      */
-    if (!isMobile) {
+    if (!false) {
       const contentOffset = Math.floor(blockHeight / 2);
 
       this.nodes.plusButton.style.transform = `translate3d(0, calc(${contentOffset}px - 50%), 0)`;
