@@ -9,18 +9,18 @@
   will-change: opacity, transform;
   display: none;
 
-  @media (--mobile) {
+  /* @media (--mobile) {
     @apply --overlay-pane;
     padding: 3px;
     margin-top: 5px;
-  }
+  } */
 
   &--opened {
     display: block;
 
-    @media (--mobile){
+    /* @media (--mobile){
       display: flex;
-    }
+    } */
   }
 
   &__content {
@@ -28,12 +28,12 @@
     margin: 0 auto;
     position: relative;
 
-    @media (--mobile){
+    /* @media (--mobile){
       display: flex;
       align-content: center;
       margin: 0;
       max-width: calc(100% - 40px);
-    }
+    } */
   }
 
   &__plus {
@@ -53,11 +53,11 @@
       display: none;
     }
 
-    @media (--mobile){
+    /* @media (--mobile){
       display: inline-flex !important;
       position: static;
       transform: none !important;
-    }
+    } */
   }
 
   &__plus,
@@ -76,14 +76,14 @@
     top: 10px;
     padding-right: 16px;
     opacity: 0;
-
+/* 
     @media (--mobile){
       position: static;
       margin-left: auto;
       padding-right: 10px;
       display: flex;
       align-items: center;
-    }
+    } */
 
     &--opened {
       opacity: 1;
