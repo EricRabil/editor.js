@@ -342,9 +342,13 @@ export default class BlockEvents extends Module {
 
       const index = BlockManager.currentBlockIndex;
 
-      if (BlockManager.previousBlock && currentBlock.name === 'paragraph' && BlockManager.previousBlock.inputs.length === 0) {
+      if (BlockManager.previousBlock && BlockManager.previousBlock.inputs.length === 0) {
         /** If previous block doesn't contain inputs, remove it */
-        BlockManager.removeBlock(index - 1);
+        if (currentBlock.name === 'paragraph') {
+          BlockManager.removeBlock(index - 1);
+        } else {
+          BlockManager.replace('paragraph', {});
+        }
       } else {
         /** If block is empty, just remove it */
         BlockManager.removeBlock();
