@@ -31,7 +31,7 @@ export default class ModificationsObserver extends Module {
    * Used to prevent several mutation callback execution
    * @type {Function}
    */
-  private mutationDebouncer = _.debounce( () => {
+  private mutationDebouncer = _.debounce(() => {
     this.updateNativeInputs();
     this.config.onChange();
   }, ModificationsObserver.DebounceTimer);
@@ -62,7 +62,7 @@ export default class ModificationsObserver extends Module {
     /**
      * wait till Browser render Editor's Blocks
      */
-    window.setTimeout( () => {
+    window.setTimeout(() => {
       this.setObserver();
     }, 1000);
   }
@@ -90,7 +90,7 @@ export default class ModificationsObserver extends Module {
    * so that User can handle outside from API
    */
   private setObserver(): void {
-    const {UI} = this.Editor;
+    const { UI } = this.Editor;
     const observerOptions = {
       childList: true,
       attributes: true,

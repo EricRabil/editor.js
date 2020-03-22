@@ -67,6 +67,7 @@ export interface API {
   toolbar: Toolbar;
   inlineToolbar: InlineToolbar;
   tooltip: Tooltip;
+  config: EditorConfig;
 }
 
 /**

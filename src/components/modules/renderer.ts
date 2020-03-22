@@ -66,7 +66,8 @@ export default class Renderer extends Module {
     const { Tools, BlockManager } = this.Editor;
     const tool = item.type;
     const data = item.data;
-    const settings = item.settings;
+    const uuid = data['__uuid__'];
+    const settings = { ...item.settings, __uuid__: uuid };
 
     if (tool in Tools.available) {
       try {

@@ -151,13 +151,13 @@ export default class Blocks {
    * @param {Boolean} replace — it true, replace block on given index
    */
   public insert(index: number, block: Block, replace: boolean = false): void {
+    if (index > this.length) {
+      index = this.length;
+    }
+
     if (!this.length) {
       this.push(block);
       return;
-    }
-
-    if (index > this.length) {
-      index = this.length;
     }
 
     if (replace) {

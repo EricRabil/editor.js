@@ -13,6 +13,14 @@ import * as _ from '../utils';
 import Blocks from '../blocks';
 import {BlockTool, BlockToolConstructable, BlockToolData, PasteEvent, ToolConfig} from '../../../types';
 
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = (Math.random() * 16) | 0,
+          v = c == 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+  });
+}
+
 /**
  * @typedef {BlockManager} BlockManager
  * @property {Number} currentBlockIndex - Index of current working block
@@ -207,10 +215,11 @@ export default class BlockManager extends Module {
    *
    * @return {Block}
    */
-  public composeBlock(toolName: string, data: BlockToolData = {}, settings: ToolConfig = {}): Block {
+  public composeBlock(toolName: string, data: BlockToolData = {}, settings: ToolConfig = {}, uuid?: string): Block {
+    uuid = uuid ? uuid : (typeof data['__uuid__'] === 'string' ? data['__uuid__'] : uuidv4());
     const toolInstance = this.Editor.Tools.construct(toolName, data) as BlockTool;
     const toolClass = this.Editor.Tools.available[toolName] as BlockToolConstructable;
-    const block = new Block(toolName, toolInstance, toolClass, settings, this.Editor.API.methods);
+    const block = new Block(toolName, toolInstance, toolClass, settings, this.Editor.API.methods, uuid);
 
     this.bindEvents(block);
 
@@ -234,13 +243,20 @@ export default class BlockManager extends Module {
     settings: ToolConfig = {},
     index: number = this.currentBlockIndex + 1,
     needToFocus: boolean = true,
+    swallow: boolean = false,
   ): Block {
-    const block = this.composeBlock(toolName, data, settings);
+    const block = this.composeBlock(toolName, data, settings, settings['__uuid__']);
+    const previousAtIndex = this.getBlockByIndex(index);
 
     this._blocks[index] = block;
 
     if (needToFocus) {
       this.currentBlockIndex = index;
+    }
+
+    if (this.config.onInsert && !swallow) {
+      // should we only run this on previous?
+      this.config.onInsert(previousAtIndex && previousAtIndex['uuid'] || null, { name: toolName, data, settings: {...settings, __uuid__: block['uuid']}, needToFocus });
     }
 
     return block;
@@ -284,8 +300,9 @@ export default class BlockManager extends Module {
    *
    * @return {Block} inserted Block
    */
-  public insertInitialBlockAtIndex(index: number, needToFocus: boolean = false) {
+  public insertInitialBlockAtIndex(index: number, needToFocus: boolean = false, swallow: boolean = false) {
     const block = this.composeBlock(this.config.initialBlock, {}, {});
+    const relativeTo: Block | undefined = this._blocks[index];
 
     this._blocks[index] = block;
 
@@ -293,6 +310,12 @@ export default class BlockManager extends Module {
       this.currentBlockIndex = index;
     } else if (index <= this.currentBlockIndex) {
       this.currentBlockIndex++;
+    }
+
+    if (this.config.onInsert && !swallow) {
+      // if relativeTo doesnt exist this will be inserted at the base of the note
+      // relativeTo represents insert this after th
+      this.config.onInsert(relativeTo && relativeTo.uuid, { name: block.name, data: {}, settings: {__uuid__: block['uuid']}, needToFocus });
     }
 
     return block;
@@ -342,11 +365,19 @@ export default class BlockManager extends Module {
    * Remove block with passed index or remove last
    * @param {Number|null} index
    */
-  public removeBlock(index?: number): void {
+  public removeBlock(index?: number, swallow: boolean = false): void {
     if (index === undefined) {
       index = this.currentBlockIndex;
     }
+
+    const block = this.getBlockByIndex(index);
+    const uuid = block['uuid'];
+
     this._blocks.remove(index);
+
+    if (this.config.onRemove && !swallow) {
+      this.config.onRemove(uuid);
+    }
 
     if (this.currentBlockIndex >= index) {
       this.currentBlockIndex--;
@@ -422,6 +453,8 @@ export default class BlockManager extends Module {
       text: $.isEmpty(wrapper) ? '' : wrapper.innerHTML,
     };
 
+    this.currentBlock.triggerUpdate();
+
     /**
      * Renew current Block
      * @type {Block}
@@ -441,7 +474,11 @@ export default class BlockManager extends Module {
     toolName: string = this.config.initialBlock,
     data: BlockToolData = {},
   ): Block {
-    const block = this.composeBlock(toolName, data);
+    const block = this.composeBlock(toolName, data, undefined, this.currentBlock.uuid);
+
+    if (this.config.onReplace) {
+      this.config.onReplace(this.currentBlock['uuid'], { toolName, data });
+    }
 
     this._blocks.insert(this.currentBlockIndex, block, true);
 
@@ -455,6 +492,10 @@ export default class BlockManager extends Module {
    */
   public getBlockByIndex(index): Block {
     return this._blocks[index];
+  }
+
+  public getBlockByUUID(uuid: string) {
+    return this._blocks.blocks.findIndex((block) => block['uuid'] === uuid);
   }
 
   /**

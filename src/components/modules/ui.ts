@@ -304,7 +304,7 @@ export default class UI extends Module {
     this.Editor.Listeners.on(this.nodes.redactor,
       'touchstart',
       (event) => this.documentTouched(event as MouseEvent),
-      true,
+      { passive: true },
     );
 
     this.Editor.Listeners.on(document, 'keydown', (event) => this.documentKeydown(event as KeyboardEvent), true);

@@ -10,6 +10,7 @@ import '@babel/register';
 
 import 'components/polyfills';
 import Core from './components/core';
+import Selection from './components/selection';
 
 /**
  * Editor.js
@@ -36,6 +37,8 @@ export default class EditorJS {
    * Internal Core api
    */
   public core: Core;
+
+  public selectionUtils: typeof Selection = Selection;
 
   /** Editor version */
   static get version(): string {

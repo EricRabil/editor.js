@@ -68,6 +68,10 @@ export default class Block {
     };
   }
 
+  get allowedInputSelectors() {
+    return this.allowedInputTypes.map((type) => `input[type="${type}"]`);
+  }
+
   /**
    * Find and return all editable elements (contenteditables and native inputs) in the Tool HTML
    *
@@ -82,10 +86,9 @@ export default class Block {
     }
 
     const content = this.holder;
-    const allowedInputTypes = ['text', 'password', 'email', 'number', 'search', 'tel', 'url'];
 
     const selector = '[contenteditable], textarea, input:not([type]), '
-      + allowedInputTypes.map((type) => `input[type="${type}"]`).join(', ');
+      + this.allowedInputSelectors.join(', ');
 
     let inputs = _.array(content.querySelectorAll(selector));
 
@@ -310,6 +313,15 @@ export default class Block {
   }
 
   /**
+   * Returns elements that will not trigger MutationObserver
+   */
+  get legacyObservables(): Array<HTMLInputElement | HTMLTextAreaElement> {
+    return this.holder && Array.from(this.holder.querySelectorAll('input:not([type]), textarea, ' + this.allowedInputSelectors.join(', '))) || [];
+  }
+
+  public allowedInputTypes = ['text', 'password', 'email', 'number', 'search', 'tel', 'url'];
+
+  /**
    * Block Tool`s name
    */
   public name: string;
@@ -339,6 +351,10 @@ export default class Block {
    */
   public tunes: BlockTune[];
 
+  public uuid: string;
+
+  public lastData: any;
+
   /**
    * Cached inputs
    * @type {HTMLElement[]}
@@ -366,12 +382,11 @@ export default class Block {
    * Debounce Timer
    * @type {number}
    */
-  private readonly modificationDebounceTimer = 450;
-
+  private readonly modificationDebounceTimer = 50;
   /**
    * Is fired when DOM mutation has been happened
    */
-  private didMutated = _.debounce((): void => {
+  private didMutated = _.debounce(async () => {
     /**
      * Drop cache
      */
@@ -381,6 +396,10 @@ export default class Block {
      * Update current input
      */
     this.updateCurrentInput();
+
+    console.log('rahh');
+
+    await this.triggerUpdate();
 
     this.call(BlockToolAPI.UPDATED);
   }, this.modificationDebounceTimer);
@@ -399,6 +418,7 @@ export default class Block {
     toolClass: BlockToolConstructable,
     settings: ToolConfig,
     apiMethods: API,
+    uuid: string | null = null,
   ) {
     this.name = toolName;
     this.tool = toolInstance;
@@ -407,12 +427,41 @@ export default class Block {
     this.api = apiMethods;
     this.holder = this.compose();
 
+    Object.defineProperty(this, 'uuid', {
+      get() {
+        return uuid;
+      },
+      set() {
+        throw new Error('fuck off');
+      },
+      enumerable: false,
+      configurable: false,
+    });
+
     this.mutationObserver = new MutationObserver(this.didMutated);
 
     /**
      * @type {BlockTune[]}
      */
     this.tunes = this.makeTunes();
+  }
+
+  public async triggerUpdate() {
+    const { onUpdate } = this.api.config;
+    if (onUpdate && typeof this.tool.save === 'function') {
+      const { name: toolName, uuid, settings } = this;
+      const data = await this.save(), serialized = JSON.stringify(data && data.data);
+
+      // ensure this isn't a pointless update event
+      if (this.lastData === serialized) { return; }
+
+      const dontDoIt = this.api.config.shouldSwallowUpdate && await this.api.config.shouldSwallowUpdate(this.uuid, data as object);
+
+      if (dontDoIt) { return; }
+
+      this.lastData = serialized;
+      onUpdate({ data: {data, toolName, settings}, uuid });
+    }
   }
 
   /**
@@ -449,6 +498,10 @@ export default class Block {
    * @return {Object}
    */
   public async save(): Promise<void|SavedData> {
+    if (typeof this.tool.save !== 'function') {
+      _.log('No-oping save because tool.save is not a function', 'warn', { block: this, tool: this.tool });
+      return {} as any;
+    }
     const extractedBlock = await this.tool.save(this.pluginsContent as HTMLElement);
 
     /**
@@ -461,10 +514,14 @@ export default class Block {
       .then((finishedExtraction) => {
         /** measure promise execution */
         measuringEnd = window.performance.now();
+        // fuck
 
         return {
           tool: this.name,
-          data: finishedExtraction,
+          data: {
+            ...finishedExtraction,
+            __uuid__: this['uuid'],
+          },
           time : measuringEnd - measuringStart,
         };
       })
@@ -546,6 +603,10 @@ export default class Block {
         attributes: true,
       },
     );
+
+    this.legacyObservables.forEach((elm) => {
+      elm.addEventListener('input', this.didMutated);
+    });
   }
 
   /**
@@ -553,6 +614,10 @@ export default class Block {
    */
   public willUnselect() {
     this.mutationObserver.disconnect();
+
+    this.legacyObservables.forEach((elm) => {
+      elm.removeEventListener('input', this.didMutated);
+    });
   }
 
   /**

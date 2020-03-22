@@ -33,8 +33,9 @@ export interface Blocks {
    * Swaps two Blocks
    * @param {number} fromIndex - block to swap
    * @param {number} toIndex - block to swap with
+   * @param {boolean} swallow - should the event be swallowed or dispatched
    */
-  swap(fromIndex: number, toIndex: number): void;
+  swap(fromIndex: number, toIndex: number, swallow?: boolean): void;
 
   /**
    * Returns Block holder by Block index

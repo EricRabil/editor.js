@@ -19,7 +19,7 @@ export default class BlocksAPI extends Module {
       render: (data: OutputData) => this.render(data),
       renderFromHTML: (data: string) => this.renderFromHTML(data),
       delete: () => this.delete(),
-      swap: (fromIndex: number, toIndex: number) => this.swap(fromIndex, toIndex),
+      swap: (fromIndex: number, toIndex: number, swallow?: boolean) => this.swap(fromIndex, toIndex, swallow),
       getBlockByIndex: (index: number) => this.getBlockByIndex(index),
       getCurrentBlockIndex: () => this.getCurrentBlockIndex(),
       getBlocksCount: () => this.getBlocksCount(),
@@ -61,8 +61,15 @@ export default class BlocksAPI extends Module {
    * @param {number} fromIndex - position of first Block
    * @param {number} toIndex - position of second Block
    */
-  public swap(fromIndex: number, toIndex: number): void {
+  public swap(fromIndex: number, toIndex: number, swallow: boolean = false): void {
     this.Editor.BlockManager.swap(fromIndex, toIndex);
+
+    const fromUUID = this.Editor.BlockManager.getBlockByIndex(fromIndex).uuid;
+    const toUUID = this.Editor.BlockManager.getBlockByIndex(toIndex).uuid;
+
+    if (this.config.onSwap && !swallow) {
+      this.config.onSwap(fromUUID, toUUID);
+    }
 
     /**
      * Move toolbar

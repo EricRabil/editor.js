@@ -183,6 +183,9 @@ export default class Sanitizer extends Module {
   public getInlineToolsConfig(name: string): SanitizerConfig {
     const {Tools} = this.Editor;
     const toolsConfig = Tools.getToolSettings(name);
+    if (!toolsConfig) {
+      return this.getAllInlineToolsConfig();
+    }
     const enableInlineTools = toolsConfig.inlineToolbar || [];
 
     let config = {} as SanitizerConfig;
