@@ -581,6 +581,10 @@ export default class UI extends Module {
       return;
     }
 
+    if (this.config.onClick) {
+      this.config.onClick(event);
+    }
+
     event.stopImmediatePropagation();
     event.stopPropagation();
 

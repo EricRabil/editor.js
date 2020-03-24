@@ -20,6 +20,11 @@ export interface EditorConfig {
   autofocus?: boolean;
 
   /**
+   * Called on click, only for notification purposes. Calling stopPropagation/preventDefault/etc will not alter editor behavior.
+   */
+  onClick?: (event: MouseEvent) => any;
+
+  /**
    * Called on block insert, allows for better live collab support.
    * Get after index by using BlockManager.getBlockByUUID(after) then:
    * const index = after + 1;
